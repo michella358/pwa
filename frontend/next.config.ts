@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
       {
         source: '/api/:path*',
         destination: process.env.NODE_ENV === 'production' 
-          ? 'https://your-backend-url.vercel.app/api/:path*'
+          ? 'https://backend-4n2msx870-pwas-projects-71c7ebac.vercel.app/api/:path*'
           : 'http://localhost:5000/api/:path*'
       }
     ];

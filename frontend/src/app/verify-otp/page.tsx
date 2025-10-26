@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 function VerifyOtpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const userId = searchParams.get('userId');
+  const userId = searchParams?.get('userId');
 
   const [otpCode, setOtpCode] = useState('');
   const [error, setError] = useState<string | null>(null);
