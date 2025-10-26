@@ -37,7 +37,7 @@ export default function LoginPage() {
         ? { email, password, loginType: 'admin' }
         : { whatsapp_number: whatsappNumber, password, loginType: 'client' };
 
-      const res = await axios.post('http://localhost:5000/api/auth/login', loginData);
+      const res = await axios.post('/api/auth/login', loginData);
 
       const { token, user } = res.data;
       localStorage.setItem('token', token);
