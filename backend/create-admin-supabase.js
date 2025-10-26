@@ -81,7 +81,7 @@ async function createAdminMaster() {
 
     console.log('\n🔑 LOGIN CREDENTIALS:');
     console.log('-'.repeat(50));
-    console.log('Username:', adminData.username);
+    console.log('Email:', adminData.email);
     console.log('Password:', adminData.password);
     console.log('Login URL: http://localhost:3000/login');
 
@@ -97,8 +97,8 @@ async function createAdminMaster() {
     console.log('1. Start backend server: npm start');
     console.log('2. Start frontend server: npm run dev (in frontend directory)');
     console.log('3. Open http://localhost:3000/login');
-    console.log('4. Select "Username (Admin)" from login type dropdown');
-    console.log('5. Login with username "admin" and password "admin123"');
+    console.log('4. Select "Admin (Email)" from login type dropdown');
+    console.log('5. Login with email "admin@pwa-notification.com" and password "admin123"');
     console.log('6. Change password and update profile information');
 
     console.log('\n✅ Admin master setup completed successfully!');

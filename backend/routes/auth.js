@@ -11,8 +11,8 @@ if (process.env.USE_MOCK_MODELS === 'true') {
   OtpCode = require('../models/mock/OtpCode');
 } else {
   console.log('🔧 Using Supabase models');
-  User = require('../models/User');
-  OtpCode = require('../models/OtpCode');
+  User = require('../models/supabase/User');
+  OtpCode = require('../models/supabase/OtpCode');
 }
 const { verifyToken } = require('../middlewares/auth');
 
@@ -173,32 +173,57 @@ router.post('/verify-otp', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   try {
-    const { whatsapp_number, password, username, email } = req.body;
+    const { whatsapp_number, password, username, email, loginType } = req.body;
     
     // Validate input - bisa login dengan WhatsApp (client) atau username/email (admin)
     if (!password) {
       return res.status(400).json({ message: 'Password is required' });
     }
     
-    if (!whatsapp_number && !username && !email) {
-      return res.status(400).json({ message: 'WhatsApp number, username, or email is required' });
+    // Validasi berdasarkan loginType
+    if (loginType === 'admin') {
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required for admin login' });
+      }
+    } else if (loginType === 'client') {
+      if (!whatsapp_number) {
+        return res.status(400).json({ message: 'WhatsApp number is required for client login' });
+      }
+    } else {
+      // Fallback untuk kompatibilitas dengan sistem lama
+      if (!whatsapp_number && !username && !email) {
+        return res.status(400).json({ message: 'WhatsApp number, username, or email is required' });
+      }
     }
     
-    // Find user berdasarkan input
+    // Find user berdasarkan loginType atau input
     let user = null;
-    if (whatsapp_number) {
-      // Login dengan WhatsApp (untuk client)
-      user = await User.findByWhatsappNumber(whatsapp_number);
+    if (loginType === 'admin' && email) {
+      // Login admin dengan email
+      user = await User.findByEmail(email);
+    } else if (loginType === 'client' && whatsapp_number) {
+      // Login client dengan WhatsApp
+      user = await User.findByWhatsApp(whatsapp_number);
+    } else if (whatsapp_number) {
+      // Fallback: Login dengan WhatsApp (untuk client)
+      user = await User.findByWhatsApp(whatsapp_number);
     } else if (username) {
-      // Login dengan username (untuk admin)
+      // Fallback: Login dengan username (untuk admin)
       user = await User.findByUsername(username);
     } else if (email) {
-      // Login dengan email (untuk admin)
+      // Fallback: Login dengan email (untuk admin)
       user = await User.findByEmail(email);
     }
     
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    
+    // Validasi role berdasarkan loginType
+    if (loginType === 'admin' && user.role !== 'admin_master') {
+      return res.status(401).json({ message: 'Invalid admin credentials' });
+    } else if (loginType === 'client' && user.role !== 'client') {
+      return res.status(401).json({ message: 'Invalid client credentials' });
     }
     
     // Check password

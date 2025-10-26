@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [loginType, setLoginType] = useState<'admin' | 'client'>('client');
+  const [email, setEmail] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -15,17 +17,27 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    if (!whatsappNumber || !password) {
-      setError('Semua field harus diisi');
-      setLoading(false);
-      return;
+    // Validasi berdasarkan tipe login
+    if (loginType === 'admin') {
+      if (!email || !password) {
+        setError('Email dan password harus diisi');
+        setLoading(false);
+        return;
+      }
+    } else {
+      if (!whatsappNumber || !password) {
+        setError('Nomor WhatsApp dan password harus diisi');
+        setLoading(false);
+        return;
+      }
     }
 
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', {
-        whatsapp_number: whatsappNumber,
-        password
-      });
+      const loginData = loginType === 'admin' 
+        ? { email, password, loginType: 'admin' }
+        : { whatsapp_number: whatsappNumber, password, loginType: 'client' };
+
+      const res = await axios.post('http://localhost:5000/api/auth/login', loginData);
 
       const { token, user } = res.data;
       localStorage.setItem('token', token);
@@ -54,18 +66,70 @@ export default function LoginPage() {
       <div className="card auth-card" style={{ maxWidth: 420, margin: '0 auto' }}>
         <h2>Login</h2>
         {error && <div className="alert alert-danger">{error}</div>}
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.75rem' }}>
+        
+        {/* Login Type Selector */}
+        <div style={{ marginBottom: '1rem' }}>
           <label>
-            <span>Nomor WhatsApp</span>
-            <input type="text" value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="62xxxxxxxxxx" />
+            <span>Tipe Login</span>
+            <select 
+              value={loginType} 
+              onChange={(e) => setLoginType(e.target.value as 'admin' | 'client')}
+              style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            >
+              <option value="client">Client (WhatsApp)</option>
+              <option value="admin">Admin (Email)</option>
+            </select>
           </label>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.75rem' }}>
+          {loginType === 'admin' ? (
+            <label>
+              <span>Email</span>
+              <input 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                placeholder="admin@example.com" 
+              />
+            </label>
+          ) : (
+            <label>
+              <span>Nomor WhatsApp</span>
+              <input 
+                type="text" 
+                value={whatsappNumber} 
+                onChange={(e) => setWhatsappNumber(e.target.value)} 
+                placeholder="62xxxxxxxxxx" 
+              />
+            </label>
+          )}
+          
           <label>
             <span>Password</span>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input 
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+            />
           </label>
-          <button type="submit" disabled={loading} className="btn">{loading ? 'Loading...' : 'Login'}</button>
+          
+          <button type="submit" disabled={loading} className="btn">
+            {loading ? 'Loading...' : 'Login'}
+          </button>
         </form>
-        <p>Belum punya akun? <a href="/register">Register</a></p>
+        
+        {loginType === 'client' && (
+          <p>Belum punya akun? <a href="/register">Register</a></p>
+        )}
+        
+        {loginType === 'admin' && (
+          <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#f8f9fa', borderRadius: '4px', fontSize: '0.875rem' }}>
+            <strong>Admin Default:</strong><br />
+            Email: admin@pwa-notification.com<br />
+            Password: admin123
+          </div>
+        )}
       </div>
     </div>
   );
